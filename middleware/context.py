@@ -17,7 +17,6 @@ def get_db_info():
     if db_host is not None:
         db_info = {
             "host": db_host,
-            #"host": '127.0.0.1',
             "user": db_user,
             "password": db_password,
             "cursorclass": pymysql.cursors.DictCursor
@@ -25,6 +24,7 @@ def get_db_info():
     else:
         db_info = {
             "host": "localhost",
+            # "host": '127.0.0.1',
             "user": "dbuser",
             "password": "password",
             "cursorclass": pymysql.cursors.DictCursor

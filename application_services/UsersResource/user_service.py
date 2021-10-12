@@ -1,6 +1,5 @@
 from application_services.BaseApplicationResource import BaseApplicationResource
-import database_services.RDBService as d_service
-
+from database_services.RDBService import RDBService as RDBService
 
 class UserResource(BaseApplicationResource):
 
@@ -9,5 +8,12 @@ class UserResource(BaseApplicationResource):
 
     @classmethod
     def get_by_template(cls, template):
-        res = d_service.find_by_template("users", "names_basic_recent", template, None)
+        res = RDBService.find_by_template("schedule", "timeSlot", template, None)
+        return res
+
+    @classmethod
+    def create(cls, resource):
+        # id = RDBService.get_max_id("schedule", "timeSlot")
+        # resource["Id"] = id
+        res = RDBService.create("schedule", "timeSlot", resource)
         return res
