@@ -1,5 +1,4 @@
 from flask import Flask, Response, request
-import database_services.RDBService as d_service
 from flask_cors import CORS
 import json
 import utils.rest_utils as rest_utils
@@ -9,8 +8,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-from application_services.imdb_artists_resource import IMDBArtistResource
-from application_services.UsersResource.user_service import UserResource
+from application_services.AvailabilityResource.availability_service import AvailabilityResource
+from application_services.TimeSlotResource.time_slot_service import TimeSlotResource
 
 
 application = Flask(__name__)
@@ -21,41 +20,59 @@ def hello_world():
     return '<u>Hello World!</u>'
 
 
-# @application.route('/imdb/artists/<prefix>')
-# def get_artists_by_prefix(prefix):
-#     res = IMDBArtistResource.get_by_name_prefix(prefix)
-#     rsp = Response(json.dumps(res), status=200, content_type="application/json")
-#     return rsp
-
-
-@application.route('/<resource>', methods=['GET', 'POST'])
-def get_users(resource):
-    input = rest_utils.RESTContext(request, resource)
-    if input.method == "GET":
-        res = UserResource.get_by_template({})
+@application.route('/availability', methods=['GET', 'POST'])
+def all_availability():
+    req = rest_utils.RESTContext(request)
+    if req.method == "GET":
+        res = AvailabilityResource.get_by_template({})
         rsp = Response(json.dumps(res, default=str), status=200, content_type="application/json")
     else:
-        res = UserResource.create(input.data)
-        #headers = [{"Location", "/schedule/" + str(res)}]
-        #rsp = Response("CREATED", status=201, headers=headers, content_type="text/plain")
+        AvailabilityResource.create(req.data)
         rsp = Response("CREATED", status=201, content_type="text/plain")
     return rsp
 
-# @application.route('/timeSlot/<id>')
-# def get_artists_by_prefix(prefix):
-#     res = IMDBArtistResource.get_by_name_prefix(prefix)
-#     rsp = Response(json.dumps(res), status=200, content_type="application/json")
-#     return rsp
+
+@application.route('/timeSlot', methods=['GET', 'POST'])
+def all_time_slot():
+    req = rest_utils.RESTContext(request)
+    if req.method == "GET":
+        res = TimeSlotResource.get_by_template({})
+        rsp = Response(json.dumps(res, default=str), status=200, content_type="application/json")
+    else:
+        TimeSlotResource.create(req.data)
+        rsp = Response("CREATED", status=201, content_type="text/plain")
+    return rsp
 
 
-# #@application.route('/Project/users/first_name/<prefix>')
-# @application.route('/<db_schema>/<table_name>/<column_name>/<prefix>')
-# def get_by_prefix(db_schema, table_name, column_name, prefix):
-#     res = d_service.get_by_prefix(db_schema, table_name, column_name, prefix)
-#     rsp = Response(json.dumps(res, default=str), status=200, content_type="application/json")
-#     return rsp
+@application.route('/availability/<aid>', methods=['GET', 'PUT', 'DELETE'])
+def availability_id(aid):
+    req = rest_utils.RESTContext(request)
+    if req.method == "GET":
+        res = AvailabilityResource.get_by_template({"Id": aid})
+        rsp = Response(json.dumps(res, default=str), status=200, content_type="application/json")
+    elif req.method == "PUT":
+        AvailabilityResource.update(req.data, aid)
+        rsp = Response("UPDATED", status=200, content_type="text/plain")
+    else:
+        AvailabilityResource.delete_by_template({"Id": aid})
+        rsp = Response("DELETED", status=200, content_type="text/plain")
+    return rsp
+
+
+@application.route('/timeSlot/<tid>', methods=['GET', 'PUT', 'DELETE'])
+def time_slot_id(tid):
+    req = rest_utils.RESTContext(request)
+    if req.method == "GET":
+        res = TimeSlotResource.get_by_template({"Id": tid})
+        rsp = Response(json.dumps(res, default=str), status=200, content_type="application/json")
+    elif req.method == "PUT":
+        TimeSlotResource.update(req.data, tid)
+        rsp = Response("UPDATED", status=200, content_type="text/plain")
+    else:
+        TimeSlotResource.delete_by_template({"Id": tid})
+        rsp = Response("DELETED", status=200, content_type="text/plain")
+    return rsp
 
 
 if __name__ == '__main__':
-    #app.run(host="0.0.0.0", port=5000)
     application.run()

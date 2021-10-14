@@ -1,5 +1,4 @@
 import pymysql
-import json
 import logging
 
 import middleware.context as context
@@ -29,7 +28,7 @@ class RDBService:
         return db_connection
 
     @classmethod
-    def get_by_prefix(cls,db_schema, table_name, column_name, value_prefix):
+    def get_by_prefix(cls, db_schema, table_name, column_name, value_prefix):
         conn = RDBService._get_db_connection()
         cur = conn.cursor()
 
@@ -63,7 +62,25 @@ class RDBService:
         return clause, args
 
     @classmethod
-    def find_by_template(cls, db_schema, table_name, template, field_list):
+    def _get_set_clause_args(cls, template):
+        terms = []
+        args = []
+        clause = None
+
+        if template is None or template == {}:
+            clause = ""
+            args = None
+        else:
+            for k, v in template.items():
+                terms.append(k + "=%s")
+                args.append(v)
+
+            clause = " set " + " ,".join(terms)
+
+        return clause, args
+
+    @classmethod
+    def find_by_template(cls, db_schema, table_name, template):
         print("getting database connection")
         wc, args = RDBService._get_where_clause_args(template)
 
@@ -79,7 +96,48 @@ class RDBService:
         return res
 
     @classmethod
-    def run_sql(cls, sql_statement, args, fetch=False):
+    def delete_by_template(cls, db_schema, table_name, template):
+        wc, args = RDBService._get_where_clause_args(template)
+
+        conn = RDBService._get_db_connection()
+        cur = conn.cursor()
+
+        sql = "delete from " + db_schema + "." + table_name + " " + wc
+        cur.execute(sql, args=args)
+        cur.fetchall()
+        conn.commit()
+
+        conn.close()
+
+        return
+
+    @classmethod
+    def update_by_template(cls, db_schema, table_name, template, where_id):
+        sc, args_sc = RDBService._get_set_clause_args(template)
+        '''
+        where_json = None
+        for i in sc:
+            if i == "where":
+                where_json = template["where"]
+                break
+
+        wc, args_wc = RDBService._get_where_clause_args(where_json)
+        '''
+
+        conn = RDBService._get_db_connection()
+        cur = conn.cursor()
+
+        sql = "update " + db_schema + "." + table_name + sc + " where Id = " + str(where_id)
+        cur.execute(sql, args=args_sc)
+        cur.fetchall()
+        conn.commit()
+
+        conn.close()
+
+        return
+
+    @classmethod
+    def run_sql(cls, sql_statement, args=None, fetch=False):
         conn = RDBService._get_db_connection()
 
         try:
@@ -114,9 +172,8 @@ class RDBService:
         res = RDBService.run_sql(sql_stmt, args)
         return res
 
+    @classmethod
     def get_max_id(cls, db_schema, table_name):
-
-
         sql_stmt = "select max(Id) as id from " + db_schema + "." + table_name
         res = RDBService.run_sql(sql_stmt, fetch=True)
         return res[0]["id"]
